@@ -6,11 +6,5 @@ IoT Device Simulator， Support DLT645、ModBus、OPC UA
 | `DLT645-07 over tcp` | in progress |
 | `Modbus-TCP`         |             |
 | `OPC-UA`             |             |
-|                      |             |
-|                      |             |
-|                      |             |
-|                      |             |
-|                      |             |
-
 
 
