@@ -1,4 +1,4 @@
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
 use std::thread;
@@ -8,6 +8,7 @@ use anyhow::Result;
 use log::{debug, info, warn};
 
 const STOP: u8 = 0x16;
+const START: u8 = 0x68;
 
 pub struct Dlt64507Simulator {
     name: Arc<String>,
@@ -59,22 +60,24 @@ fn handle_connection(name: Arc<String>, stream: TcpStream) -> Result<()> {
         let mut request = vec![];
         reader.read_until(STOP, &mut request)?;
         info!("{} receive : {:02X?}", name, request);
-        debug!("{} expect  : [FE, FE, FE, FE, 68, 57, 30, 60, 51, 00, 00, 68, 11, 04, 33, 36, 34, 35, EF, 16]", name);
+        debug!("{} expect  : [FE, FE, FE, FE, 68, 57, 30, 60, 51, 00, 00, 68, 11, 04, 33, 34, 34, 35, ED, 16]", name);
+
 
         let mut response = vec![];
         let address = &request[5..11];
+        let data_id = &request[14..18];
         response.extend_from_slice(&[0xfe, 0xfe, 0xfe, 0xfe]);
         response.extend_from_slice(&[0x68]);
         response.extend_from_slice(address);
         response.extend_from_slice(&[0x68]);
         response.extend_from_slice(&[0x91]);
-        response.extend_from_slice(&[0x06, 0x33, 0x36, 0x34, 0x35, 0xC5, 0x54]);
+        response.extend_from_slice(&[0x06]);
+        response.extend_from_slice(&data_id);
+        response.extend_from_slice(&[0x34, 0x36]);
         response.extend_from_slice(&[cs(&response)]);
         response.extend_from_slice(&[0x16]);
         info!("{} response: {:02X?}\n", name, response);
-        for _ in 0..100 {
-            writer.write(&response)?;
-        }
+        writer.write(&response)?;
         writer.flush()?;
     }
 }

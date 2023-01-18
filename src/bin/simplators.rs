@@ -16,7 +16,7 @@ fn main() {
 
     let mut handles = Vec::new();
     for i in 0..count {
-        let dlt64507_simulator = Dlt64507Simulator::new(String::from((9500 + i).to_string()), 9500 + i);
+        let dlt64507_simulator = Dlt64507Simulator::new(String::from((8500 + i).to_string()), 8500 + i);
         let join_handle = dlt64507_simulator.start();
         handles.push(join_handle);
     }
