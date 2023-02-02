@@ -1,11 +1,11 @@
-use std::io::{BufRead, BufReader, BufWriter,  Write};
+use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
 
 use anyhow::Result;
-use log::{debug, info, warn};
+use log::{info, warn};
 
 const LEAD: u8 = 0xfe;
 const STOP: u8 = 0x16;
@@ -61,7 +61,6 @@ fn handle_connection(name: Arc<String>, stream: TcpStream) -> Result<()> {
         let mut request = vec![];
         reader.read_until(STOP, &mut request)?;
         info!("{} receive : {:02X?}", name, request);
-        debug!("{} expect  : [FE, FE, FE, FE, 68, 57, 30, 60, 51, 00, 00, 68, 11, 04, 33, 34, 34, 35, ED, 16]", name);
 
         if request.len() > 0 {
             let mut response = vec![];
