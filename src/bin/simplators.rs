@@ -1,7 +1,7 @@
 use std::env;
 use log::LevelFilter;
 
-use iot_device_simulator::Dlt64507Simulator;
+use iot_device_simulator::{Dlt64507Simulator, Dlt64597Simulator};
 
 fn main() {
     env_logger::builder()
@@ -16,9 +16,12 @@ fn main() {
 
     let mut handles = Vec::new();
     for i in 0..count {
-        let dlt64507_simulator = Dlt64507Simulator::new(String::from((8500 + i).to_string()), 8500 + i);
-        let join_handle = dlt64507_simulator.start();
-        handles.push(join_handle);
+        let dlt64507_simulator = Dlt64507Simulator::new(String::from((18500 + i).to_string()), 18500 + i);
+        handles.push(dlt64507_simulator.start());
+
+        let dlt64597_simulator = Dlt64597Simulator::new(String::from((19500 + i).to_string()), 19500 + i);
+        handles.push(dlt64597_simulator.start());
+
     }
     for handle in handles {
         let _ = handle.join();

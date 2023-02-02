@@ -1,4 +1,4 @@
-use std::io::{BufRead, BufReader, BufWriter,  Write};
+use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
 use std::thread;
@@ -11,14 +11,14 @@ const LEAD: u8 = 0xfe;
 const STOP: u8 = 0x16;
 const START: u8 = 0x68;
 
-pub struct Dlt64507Simulator {
+pub struct Dlt64597Simulator {
     name: Arc<String>,
     port: Arc<u16>,
 }
 
-impl Dlt64507Simulator {
-    pub fn new(name: String, port: u16) -> Dlt64507Simulator {
-        Dlt64507Simulator {
+impl Dlt64597Simulator {
+    pub fn new(name: String, port: u16) -> Dlt64597Simulator {
+        Dlt64597Simulator {
             name: Arc::new(name),
             port: Arc::new(port),
         }
@@ -61,17 +61,16 @@ fn handle_connection(name: Arc<String>, stream: TcpStream) -> Result<()> {
         let mut request = vec![];
         reader.read_until(STOP, &mut request)?;
         info!("{} receive : {:02X?}", name, request);
-        debug!("{} expect  : [FE, FE, FE, FE, 68, 57, 30, 60, 51, 00, 00, 68, 11, 04, 33, 34, 34, 35, ED, 16]", name);
-
+        debug!("{} expect  : [FE, FE, FE, FE, 68, 57, 30, 60, 51, 00, 00, 68, 11, 02, 33, 34, ED, 16]", name);
         if request.len() > 0 {
             let mut response = vec![];
             let address = &request[5..11];
             let data_id = &request[14..18];
-            response.extend_from_slice(&[LEAD]);
+            response.extend_from_slice(&[LEAD, LEAD]);
             response.extend_from_slice(&[START]);
             response.extend_from_slice(address);
             response.extend_from_slice(&[START]);
-            response.extend_from_slice(&[0x91]);
+            response.extend_from_slice(&[0x81]);
             response.extend_from_slice(&[0x06]);
             response.extend_from_slice(&data_id);
             response.extend_from_slice(&[0x34, 0x36]);
