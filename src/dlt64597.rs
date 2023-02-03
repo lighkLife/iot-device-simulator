@@ -60,18 +60,22 @@ fn handle_connection(name: Arc<String>, stream: TcpStream) -> Result<()> {
     loop {
         let mut request = vec![];
         reader.read_until(STOP, &mut request)?;
+
+        if request.len() <= 0 {
+            continue;
+        }
         match request.iter().position(|&it| it == START) {
             None => info!("{} refuse to respond because of the request is invalid. receive= {:02X?}, \n", name, request),
             Some(index) => {
                 let mut response = vec![];
                 let address = &request[(index + 1)..(index + 7)];
                 let data_id = &request[(index + 10)..(index + 12)];
-                response.extend_from_slice(&[LEAD]);
+                response.extend_from_slice(&[LEAD, LEAD]);
                 response.extend_from_slice(&[START]);
                 response.extend_from_slice(address);
                 response.extend_from_slice(&[START]);
-                response.extend_from_slice(&[0x91]);
-                response.extend_from_slice(&[0x06]);
+                response.extend_from_slice(&[0x81]);
+                response.extend_from_slice(&[0x04]);
                 response.extend_from_slice(&data_id);
                 response.extend_from_slice(&[0x48, 0x49]);
                 response.extend_from_slice(&[cs(&response)]);
