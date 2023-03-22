@@ -76,9 +76,9 @@ fn handle_connection(name: Arc<String>, stream: TcpStream) -> Result<()> {
                 response.extend_from_slice(address);
                 response.extend_from_slice(&[START]);
                 response.extend_from_slice(&[0x91]);
-                response.extend_from_slice(&[0x06]);
+                response.extend_from_slice(&[0x0c]);
                 response.extend_from_slice(&data_id);
-                response.extend_from_slice(&[0x34, 0x36]);
+                response.extend_from_slice(&[0x44, 0x48, 0x43, 0x35, 0x56, 0x67, 0x45, 0x45]);
                 response.extend_from_slice(&[cs(&response)]);
                 response.extend_from_slice(&[STOP]);
                 info!("DLT645-07 {} \nreceive:  {:02X?}\nresponse: {:02X?}\n", name, request, response);

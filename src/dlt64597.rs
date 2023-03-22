@@ -53,7 +53,8 @@ fn start_server(name: Arc<String>, port: Arc<u16>) {
 }
 
 fn handle_connection(name: Arc<String>, stream: TcpStream) -> Result<()> {
-    info!("connected from {}", stream.peer_addr()?);
+    let peer = stream.peer_addr()?;
+    info!("connected from {}", peer);
     let stream_clone = stream.try_clone()?;
     let mut reader = BufReader::new(stream);
     let mut writer = BufWriter::new(stream_clone);
@@ -75,12 +76,12 @@ fn handle_connection(name: Arc<String>, stream: TcpStream) -> Result<()> {
                 response.extend_from_slice(address);
                 response.extend_from_slice(&[START]);
                 response.extend_from_slice(&[0x81]);
-                response.extend_from_slice(&[0x04]);
+                response.extend_from_slice(&[0x0a]);
                 response.extend_from_slice(&data_id);
-                response.extend_from_slice(&[0x48, 0x49]);
+                response.extend_from_slice(&[0x44, 0x43, 0x46, 0x35, 0x48, 0x44, 0x44, 0x43]);
                 response.extend_from_slice(&[cs(&response)]);
                 response.extend_from_slice(&[STOP]);
-                info!("DLT645-97 {} \nreceive:  {:02X?}\nresponse: {:02X?}\n", name, request, response);
+                info!("DLT645-97 {} \nreceive from {}:  {:02X?}\nresponse: {:02X?}\n", name, peer, request, response);
                 writer.write(&response)?;
                 writer.flush()?;
             }
