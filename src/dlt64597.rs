@@ -4,8 +4,8 @@ use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
 
-use anyhow::Result;
-use log::{info, warn};
+use anyhow:: Result;
+use log::{error, info, warn};
 
 const LEAD: u8 = 0xfe;
 const STOP: u8 = 0x16;
@@ -43,7 +43,12 @@ fn start_server(name: Arc<String>, port: Arc<u16>) {
         match stream {
             Ok(stream) => {
                 let name_clone = name.clone();
-                thread::spawn(move || handle_connection(name_clone, stream));
+                thread::spawn(move ||
+                    match handle_connection(name_clone, stream) {
+                        Err(e) => error!("error between client and server {}", e),
+                        Ok(_) => {}
+                    }
+                );
             }
             Err(e) => {
                 warn!("{} found error in stream, {}", &name, e);
@@ -60,10 +65,11 @@ fn handle_connection(name: Arc<String>, stream: TcpStream) -> Result<()> {
     let mut writer = BufWriter::new(stream_clone);
     loop {
         let mut request = vec![];
-        reader.read_until(STOP, &mut request)?;
+        let len = reader.read_until(STOP, &mut request)?;
 
-        if request.len() <= 0 {
-            continue;
+        if len <= 0 {
+            info!("connection close by peer {}", peer);
+            return Ok(());
         }
         match request.iter().position(|&it| it == START) {
             None => info!("{} refuse to respond because of the request is invalid. receive= {:02X?}, \n", name, request),
@@ -81,7 +87,7 @@ fn handle_connection(name: Arc<String>, stream: TcpStream) -> Result<()> {
                 response.extend_from_slice(&[0x44, 0x43, 0x46, 0x35, 0x48, 0x44, 0x44, 0x43]);
                 response.extend_from_slice(&[cs(&response)]);
                 response.extend_from_slice(&[STOP]);
-                info!("DLT645-97 {} \nreceive from {}:  {:02X?}\nresponse: {:02X?}\n", name, peer, request, response);
+                info!("DLT645-97 {} \nreceive from {} :  {:02X?}\nresponse: {:02X?}\n", name, peer, request, response);
                 writer.write(&response)?;
                 writer.flush()?;
             }

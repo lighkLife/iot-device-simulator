@@ -5,7 +5,7 @@ use std::thread;
 use std::thread::JoinHandle;
 
 use anyhow::Result;
-use log::{info, warn};
+use log::{error, info, warn};
 
 const LEAD: u8 = 0xfe;
 const STOP: u8 = 0x16;
@@ -43,7 +43,12 @@ fn start_server(name: Arc<String>, port: Arc<u16>) {
         match stream {
             Ok(stream) => {
                 let name_clone = name.clone();
-                thread::spawn(move || handle_connection(name_clone, stream));
+                thread::spawn(move ||
+                    match handle_connection(name_clone, stream) {
+                        Err(e) => error!("error between client and server {}", e),
+                        Ok(_) => {}
+                    }
+                );
             }
             Err(e) => {
                 warn!("{} found error in stream, {}", &name, e);
@@ -53,16 +58,17 @@ fn start_server(name: Arc<String>, port: Arc<u16>) {
 }
 
 fn handle_connection(name: Arc<String>, stream: TcpStream) -> Result<()> {
-    info!("connected from {}", stream.peer_addr()?);
+    let peer = stream.peer_addr()?;
+    info!("connected from {}", peer);
     let stream_clone = stream.try_clone()?;
     let mut reader = BufReader::new(stream);
     let mut writer = BufWriter::new(stream_clone);
+    let mut request = vec![];
     loop {
-        let mut request = vec![];
-        reader.read_until(STOP, &mut request)?;
-
-        if request.len() <= 0 {
-            continue;
+        let len = reader.read_until(STOP, &mut request)?;
+        if len <= 0 {
+            info!("connection close by peer {}", peer);
+            return Ok(());
         }
 
         match request.iter().position(|&it| it == START) {
@@ -81,11 +87,12 @@ fn handle_connection(name: Arc<String>, stream: TcpStream) -> Result<()> {
                 response.extend_from_slice(&[0x44, 0x48, 0x43, 0x35, 0x56, 0x67, 0x45, 0x45]);
                 response.extend_from_slice(&[cs(&response)]);
                 response.extend_from_slice(&[STOP]);
-                info!("DLT645-07 {} \nreceive:  {:02X?}\nresponse: {:02X?}\n", name, request, response);
+                info!("DLT645-07 {} \nreceive from {} :  {:02X?}\nresponse: {:02X?}\n", name, peer, request, response);
                 writer.write(&response)?;
                 writer.flush()?;
             }
         }
+        request.clear();
     }
 }
 
